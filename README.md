@@ -7,4 +7,4 @@ and the number of sweeps for the Monte-Carlo simulation.
 
 The simulation makes one move every sweep. This move can be a spin flip or a change in the path.
 A change in path is possible for all points except the begin- and endpoint. Although the functions 
-to move these two points are present, there is still a bug somewhere in the code that needs to be and will be fixed. 
+to move these two points are present, there is still a bug somewhere in the code that needs to be and will be fixed.
