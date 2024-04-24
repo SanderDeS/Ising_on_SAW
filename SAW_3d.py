@@ -316,7 +316,7 @@ def metropol_spin(config,sweeps,T):
     Energy = np.zeros(sweeps)
     for sweep in range(sweeps):
         #config_copy = config.copy()
-        i = np.random.randint(0,len(x3)-1)
+        i = np.random.randint(0,len(x3))
         x_pos = x3[i] #np.random.randint(0,99)#x[i]
         y_pos = y3[i] #np.random.randint(0,99)#y[i]
         z_pos = z3[i] #np.random.randint(0,99)#z[i]
@@ -341,7 +341,7 @@ def metropol_saw(config,sweeps,T):
     Energy = np.zeros(sweeps)
     for sweep in range(sweeps):
         config_copy = config.copy()
-        i = np.random.randint(0,len(x3)-1)
+        i = np.random.randint(0,len(x3))
         x_pos = x3[i]
         y_pos = y3[i]
         z_pos = z3[i]
