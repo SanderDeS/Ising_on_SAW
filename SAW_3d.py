@@ -4,6 +4,7 @@ import scipy as sc
 import matplotlib.pyplot as plt
 from sympy.utilities.iterables import variations
 import time
+import itertools
 from matplotlib.ticker import PercentFormatter
 from scipy.optimize import curve_fit
 import warnings
@@ -100,7 +101,6 @@ def total_energy(spin_array,N,x,y,z):
     return -(sum([energy(spin_array,N, spin_list[i][0], spin_list[i][1], spin_list[i][2]) for i in range(len(spin_list))]) + K*len(x))
 
 '''Functions for the SAW move'''
-
 
 def correct_z(x, y, z, i, spin_array):
     possible = False
@@ -267,10 +267,11 @@ def correct_x(x, y, z, i, spin_array):
         return possible, positions
 
 def find_possible_points(x,y,z,spins):
+    #possible_points = []
     possible_points_x = []
     possible_points_y = []
     possible_points_z = []
-    for i in range(1,len(x)-1):
+    for i in range(0,len(x)-1):
         possible_x, positions_x = correct_x(x,y,z,i,spins)
         possible_y, positions_y = correct_y(x,y,z,i,spins)
         possible_z, positions_z = correct_z(x,y,z,i,spins)
@@ -289,7 +290,8 @@ def find_possible_points(x,y,z,spins):
         raise ValueError('list of possible points_y must be non-empty, the SAW cannot move in this direction.')
     if len(possible_points_z) ==0:
         raise ValueError('list of possible points_z must be non-empty, the SAW cannot move in this direction.')
-    return possible_points_x, possible_points_y, possible_points_z
+    possible_points = list(itertools.chain(possible_points_x, possible_points_y, possible_points_z))
+    return possible_points
 
 def spins_1dising(spin_array,x,y,z):
     spin_1d = [0]#[0]
@@ -316,7 +318,7 @@ def metropol_spin(config,sweeps,T):
     Energy = np.zeros(sweeps)
     for sweep in range(sweeps):
         #config_copy = config.copy()
-        i = np.random.randint(0,len(x3))
+        i = np.random.randint(0,len(x3)-1)
         x_pos = x3[i] #np.random.randint(0,99)#x[i]
         y_pos = y3[i] #np.random.randint(0,99)#y[i]
         z_pos = z3[i] #np.random.randint(0,99)#z[i]
@@ -335,32 +337,39 @@ def metropol_spin(config,sweeps,T):
         #print(mag[sweep])
     return [config, mag, Energy]
 
-def metropol_saw(config,sweeps,T):
-    β = 1/(T)
-    mag = np.zeros(sweeps)
-    Energy = np.zeros(sweeps)
+
+def metropol_saw(config, sweeps, T):
+    β = 1 / (T)
+    mag = 0  # np.zeros(sweeps)
+    Energy = 0  # np.zeros(sweeps)
     for sweep in range(sweeps):
-        config_copy = config.copy()
-        i = np.random.randint(0,len(x3))
+        # config_copy = config.copy()
+        i = np.random.choice(find_possible_points(x3, y3, z3, spins))  # [np.random.randint(0,3)])
+        # print(i)
         x_pos = x3[i]
         y_pos = y3[i]
         z_pos = z3[i]
-        possible_x, positions_x = correct_x(x3,y3,z3,i,spins)
-        possible_y, positions_y = correct_y(x3,y3,z3,i,spins)
-        possible_z, positions_z = correct_z(x3,y3,z3,i,spins)
+        # if (i == 0 and x3[i] == x3[i+1]) or (i == len(x3)-1 and x3[i] == x3[i-1]):
+        possible_x, positions_x = correct_x(x3, y3, z3, i, spins)
+        # if (i == 0 and y3[i] == y3[i+1]) or (i == len(y3)-1 and y3[i] == y3[i-1]):
+        possible_y, positions_y = correct_y(x3, y3, z3, i, spins)
+        # if (i == 0 and z3[i] == z3[i+1]) or (i == len(z3)-1 and z3[i] == z3[i-1]):
+        possible_z, positions_z = correct_z(x3, y3, z3, i, spins)
+
         if possible_x or possible_y or possible_z:
-            config_copy = metropolis_saw_move(i)
-            E_i = energy(config,n,x_pos,y_pos,z_pos)
-            E_f = energy(config_copy,n,x_pos,y_pos,z_pos)
-            ΔE = E_f-E_i
+            E_i = energy(config, n, x_pos, y_pos, z_pos)
+            config = metropolis_saw_move(i)
+            E_f = energy(config, n, x_pos, y_pos, z_pos)
+            ΔE = E_f - E_i
             r = np.random.uniform()
-            if ΔE <=0 or r<= np.exp(-β*ΔE):
+            if not (ΔE <= 0 or r <= np.exp(-β * ΔE)):
                 config = metropolis_saw_move(i)
-        #Magnetization
-        mag[sweep] = sum(sum(sum(config)))/(len(x3))#[sweep]
-        #Energy
-        Energy[sweep]  = total_energy(config,n,x3,y3,z3)#[sweep]
-        #print(mag[sweep])
+        # Magnetization
+        mag = sum(sum(sum(config))) / (len(x3))  # [sweep]
+        # Energy
+        Energy = total_energy(config, n, x3, y3, z3)  # [sweep]
+        # print(mag[sweep])
+    plus_spin, min_spin = plus_min(spins)
     return [config, mag, Energy]
 
 def metropolis_saw_move(i):
@@ -400,7 +409,7 @@ def metropolis_combo(config,sweeps,T):
     # random choice of either a spin or saw move
     magnetization = np.zeros(sweeps)
     energy_saw = np.zeros(sweeps)
-    spins_copy = np.zeros(sweeps)
+    #spins_copy = np.zeros(sweeps)
     for sweep in range(sweeps):
         if np.random.randint(0,2) == 0: #spin move
             temp_var = metropol_spin(spins, 1, T)
@@ -414,8 +423,12 @@ def metropolis_combo(config,sweeps,T):
             energy_saw[sweep] = temp_var[2]
     return magnetization, energy_saw
 
-n = 50
+n = 25
 x3, y3, z3 = saw_3d(n)
+''' possible flat configuration for the SAW '''
+#x3 = [i for i in range(n,n+n)]
+#y3 = [n for _ in range(n,n+n)]
+#z3 = [n for _ in range(n,n+n)]
 
 x_original = x3.copy()
 y_original = y3.copy()
@@ -423,7 +436,7 @@ z_original = z3.copy()
 
 path = merge_lists(x3, y3, z3)
 
-N = 3 * n
+N = 3*n
 config_initial = create_initial(N, N, N)  # np.ones((N,N))
 spins = spin_on_saw(config_initial, x3, y3, z3)
 spins_original = spins.copy()
@@ -447,20 +460,20 @@ ax.plot(x3[0], y3[0],z3[0], 'ks', ms = 5, label='start')
 ax.plot(x3[-1], y3[-1],z3[-1],'kp', ms = 5, label='end')
 plt.legend()
 plt.title('3D SAW of length ' + str(len(x3)), fontsize=14, fontweight='bold', y = 1.05)
-#plt.savefig('/home/sander/Documents/School/univ/Fysica/master/fase_3/thesis/notes/notes/Pictures/SAW_plot_samespin.png', bbox_inches='tight')
 plt.show()
 
 '''steps and temperature'''
 T=2
-steps = 10**4
+steps = 10**2
 
 ''' COMBINATION OF SPIN AND SAW MOVES '''
 t_b = time.time()
-mag_after, energy_after = metropolis_combo(spins,steps,T)
+#mag_after, energy_after = (
+metropolis_combo(spins,steps,T)#)
 t_e = time.time()
 print(t_e-t_b, "s")
 
-# PLOT OF THE saw AFTER THE SIMULATION
+# PLOT OF THE SAW AFTER THE SIMULATION
 
 plus_spin, min_spin = plus_min(spins)
 plus_spin_x, plus_spin_y, plus_spin_z = zip(*plus_spin)
@@ -476,5 +489,4 @@ ax.plot(x3[0], y3[0],z3[0], 'ks', ms = 5, label='start')
 ax.plot(x3[-1], y3[-1],z3[-1],'kx', ms = 5, label='end')
 plt.legend()
 plt.title('3D SAW of length ' + str(len(x3)), fontsize=14, fontweight='bold', y = 1.05)
-#plt.savefig('/home/sander/Documents/School/univ/Fysica/master/fase_3/thesis/notes/notes/Pictures/SAW_plot_samespin.png', bbox_inches='tight')
 plt.show()
