@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore")
 
 # GLOBAL CONSTANTS
 J=-1
-h=1
+h=0
 K=2
 
 def saw_3d(n):
