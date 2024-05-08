@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore")
 #%matplotlib widget
 
 # GLOBAL CONSTANTS
-J=-1
+J=1
 h=0
 K=2
 
@@ -88,7 +88,7 @@ def neighbors(spin_array,N,x,y,z):
            ]
 
 def energy(spin_array, N, x_pos ,y_pos,z_pos):
-    return (J*spin_array[x_pos][y_pos][z_pos]*sum(neighbors(spin_array, N, x_pos, y_pos,z_pos)) + h*spin_array[x_pos][y_pos][z_pos])
+    return (-J*spin_array[x_pos][y_pos][z_pos]*sum(neighbors(spin_array, N, x_pos, y_pos,z_pos)) - h*spin_array[x_pos][y_pos][z_pos])
 
 def total_energy(spin_array,N,x,y,z):
     spin_list = merge_lists(x,y,z)
@@ -98,7 +98,7 @@ def total_energy(spin_array,N,x,y,z):
         print("neighbours: ", neighbors(spin_array, N, spin_list[i][0], spin_list[i][1]))
         print("energy:",energy(spin_array,N, spin_list[i][0], spin_list[i][1]))
     print(K*len(x))'''
-    return -(sum([energy(spin_array,N, spin_list[i][0], spin_list[i][1], spin_list[i][2]) for i in range(len(spin_list))]) + K*len(x))
+    return (sum([energy(spin_array,N, spin_list[i][0], spin_list[i][1], spin_list[i][2]) for i in range(len(spin_list))]) - K*len(x))
 
 '''Functions for the SAW move'''
 
