@@ -1,4 +1,4 @@
-# Ising_on_SAW
+# Ising_on_SAW 3D
 This program simulates an Ising model on a SAW using the metropolis algorithm.
 This repository contains a python file and a file for jupyter-lab or jupyter-notebook.
 
